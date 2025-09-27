@@ -14,6 +14,7 @@ import {
     LoadDataFn,
     SetAttachmentsFn,
     SetOptionalAddressFieldsFn,
+    SetSubjectFn,
     SetTemplateVarsFn,
 } from '../types';
 
@@ -140,7 +141,7 @@ export class EmailEventHandler<T extends string = string, Event extends EventWit
     private setOptionalAddressFieldsFn?: SetOptionalAddressFieldsFn<Event>;
     private filterFns: Array<(event: Event) => boolean> = [];
     private configurations: EmailTemplateConfig[] = [];
-    private defaultSubject: string;
+    private defaultSubject: string | SetSubjectFn<Event>;
     private from: string;
     private optionalAddressFields: {
         cc?: string;
@@ -214,7 +215,7 @@ export class EmailEventHandler<T extends string = string, Event extends EventWit
      * Sets the default subject of the email. The subject string may use Handlebars variables defined by the
      * setTemplateVars() method.
      */
-    setSubject(defaultSubject: string): EmailEventHandler<T, Event> {
+    setSubject(defaultSubject: string | SetSubjectFn<Event>): EmailEventHandler<T, Event> {
         this.defaultSubject = defaultSubject;
         return this;
     }
@@ -370,7 +371,11 @@ export class EmailEventHandler<T extends string = string, Event extends EventWit
         const { ctx } = event;
         const languageCode = this.setLanguageCodeFn?.(event) || ctx.languageCode;
         const configuration = this.getBestConfiguration(ctx.channel.code, languageCode);
-        const subject = configuration ? configuration.subject : this.defaultSubject;
+        const subject = configuration
+            ? configuration.subject
+            : typeof this.defaultSubject === 'function'
+            ? await this.defaultSubject(event, injector)
+            : this.defaultSubject;
         if (subject == null) {
             throw new Error(
                 `No subject field has been defined. ` +
