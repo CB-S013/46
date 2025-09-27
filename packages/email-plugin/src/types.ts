@@ -378,6 +378,16 @@ export type SetTemplateVarsFn<Event> = (
 
 /**
  * @description
+ * A function used to define the subject of the email.
+ *
+ * @docsCategory core plugins/EmailPlugin
+ * @docsPage Email Plugin Types
+ * @since x.x.x
+ */
+export type SetSubjectFn<Event> = (event: Event, injector: Injector) => string | Promise<string>;
+
+/**
+ * @description
  * A function used to define attachments to be sent with the email.
  * See https://nodemailer.com/message/attachments/ for more information about
  * how attachments work in Nodemailer.
